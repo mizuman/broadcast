@@ -28,7 +28,6 @@ var peer = new Peer({ key: APIKEY, debug: 3});
 // PeerIDを生成
 peer.on('open', function(){
     $('#my-id').text(peer.id);
-    ws.send(JSON.stringify({action: 'hello', id: peer.id}));
 });
 
 // // 相手からのコールを受信したら自身のメディアストリームをセットして返答
@@ -194,15 +193,15 @@ refreshMember = function(msg) {
     // console.log($("face_"+msg.id+""));
 
     $("#face_"+msg.id+" img").prop("src", msg.img)
+}
 
-    // var $item = $("<div>")
-    //                 .prop("class", "element-item ")
-    //                 .prop("id", "face_"+msg.id)
-    //                 .append(
-    //                     $("<img>").prop("src", msg.img)
-    //                 )
-    // $container.append($item)
-    //     .isotope('appended', $item);
+sendHello = function(msg) {
+    if(peer.id) {
+        ws.send(JSON.stringify({action: 'hello', id: peer.id}));
+    }
+    else {
+        setTimeout(sendHello, 2000);
+    }
 }
 
 // websocket
@@ -210,7 +209,9 @@ refreshMember = function(msg) {
 var host = location.origin.replace(/^http/, 'ws')
 var ws = new WebSocket(host);
 
-var i=0;
+ws.onopen = function (event) {
+    sendHello();
+}
 
 ws.onmessage = function (event) {
 	// var li = document.createElement('li');
