@@ -1,34 +1,50 @@
+<!DOCTYPE html>
 <html>
-  <head>
-    <style>
-      body {
-        font-family: "Helvetica Neue", helvetica, arial;
-        padding: 15px;
-      }
+<head>
+  <title>WebRTCast</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="/css/style.css">
+</head>
+<body>
 
-      ul {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-      }
+  <p>Your Peerid: <span id="my-id">...</span></p>
 
-      ul li {
-        line-height: 1.4;
-      }
-    </style>
+  <button class="btn btn-primary">get the mic</button>
 
-    <script>
-      var host = location.origin.replace(/^http/, 'ws')
-      var ws = new WebSocket(host);
-      ws.onmessage = function (event) {
-        var li = document.createElement('li');
-        li.innerHTML = JSON.parse(event.data);
-        document.querySelector('#pings').appendChild(li);
-      };
-    </script>
-  </head>
-  <body>
-    <h1>Pings</h1>
-    <ul id='pings'></ul>
-  </body>
+  <div id="isotope">
+<!--   
+    <div class="element-item">
+      <img src="http://placehold.it/200x150&text=Speaker" alt="">
+    </div>
+    <div class="element-item">
+      <img src="http://placehold.it/200x150&text=Speaker" alt="">
+    </div>
+    <div class="element-item">
+      <img src="http://placehold.it/200x150&text=Speaker" alt="">
+    </div>
+    <div class="element-item">
+      <img src="http://placehold.it/200x150&text=Speaker" alt="">
+    </div>
+    <div class="element-item">
+      <img src="http://placehold.it/200x150&text=Speaker" alt="">
+    </div>
+    <div class="element-item">
+      <img src="http://placehold.it/200x150&text=Speaker" alt="">
+    </div>
+ -->
+  </div>
+  <div class="pure-g">
+
+
+
+  <h1>Pings</h1>
+  <ul id='pings'></ul>
+
+  <script src="https://skyway.io/dist/0.3/peer.js"></script>
+  <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
+  <!-- <script type="text/javascript" src="/js/masonry.pkgd.min.js"></script> -->
+  <script type="text/javascript" src="/js/isotope.pkgd.min.js"></script>
+  <script type="text/javascript" src="/js/imagesloaded.pkgd.min.js"></script>
+  <script src="/js/script.js" type="text/javascript" charset="utf-8" async defer></script>
+</body>
 </html>
