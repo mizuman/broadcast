@@ -5,6 +5,7 @@ var APIKEY = 'fd91b82a-a13d-11e4-aa18-c1fd09219403';
 
 //ユーザーリスト
 var userList = [];
+var faceList = [];
 
 //Callオブジェクト
 var existingCall;
@@ -17,12 +18,17 @@ navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia 
 // var audioContext = new webkitAudioContext();
 // var gainNode = audioContext.createGain();
 
+// canvas context
+var ctx = null;
+var $canvas;
+
 // PeerJSオブジェクトを生成
 var peer = new Peer({ key: APIKEY, debug: 3});
 
 // PeerIDを生成
 peer.on('open', function(){
     $('#my-id').text(peer.id);
+    ws.send(JSON.stringify({action: 'hello', id: peer.id}));
 });
 
 // // 相手からのコールを受信したら自身のメディアストリームをセットして返答
@@ -67,21 +73,30 @@ peer.on('open', function(){
 
 // });
 
-// function step1 () {
-//     // メディアストリームを取得する
-//     navigator.getUserMedia({audio: true, video: true}, function(stream){
-//         $('#my-video').prop('src', URL.createObjectURL(stream));
-//         window.localStream = stream;
+function step1 () {
+    // メディアストリームを取得する
+    navigator.getUserMedia({audio: true, video: true}, function(stream){
+        $('#my-video').prop('src', URL.createObjectURL(stream));
+        window.localStream = stream;
+        setInterval(capture,2000);
+        // capture();
+        
 
-//         // 自分の音声のボリュームをコントロールする    
-//         // var mediaStreamSource = audioContext.createMediaStreamSource(stream);
-//         // gainNode.gain.value = document.getElementById("gain").value;
-//         // mediaStreamSource.connect(gainNode);
-//         // gainNode.connect(audioContext.destination);
+        // step2();
+    }, function(){ $('#step1-error').show(); });
+}
 
-//         step2();
-//     }, function(){ $('#step1-error').show(); });
-// }
+function capture () {
+    $video = $('#my-video')[0];
+    ctx.drawImage($video, 0,0,160,120);
+
+    var base64 = $("#capture-video")[0].toDataURL('image/webp');
+    // var $img = $("<img>").prop("src", base64);
+    // $("#isotope").append($img);
+
+    ws.send(JSON.stringify({action: 'capture', id: peer.id, img: base64}));
+    
+}
 
 // function step2 () {
 //     //UIコントロール
@@ -153,20 +168,41 @@ $( function() {
     $container.imagesLoaded( function() {
         $container.isotope('layout');
     });
+
+    $canvas = $("#capture-video")[0];
+    ctx = $canvas.getContext("2d");
+
+    step1();
 });
 
-addMember = function (event) {
+addMember = function (msg) {
     var $item = $("<div>")
                     .prop("class", "element-item")
+                    .prop("id", "face_"+msg.id)
                     .append(
-                        $("<img>").prop("src", "http://placehold.it/160x120&text=Speaker")
+                        $("<img>").prop("src", "http://placehold.it/160x120&text=Guest")
                     )
-                    .on( 'click', function() {
-                        $(this).toggleClass('spot');
-                        $container.isotope('layout');
-                    })
+                    // .on( 'click', function() {
+                    //     $(this).toggleClass('spot');
+                    //     $container.isotope('layout');
+                    // })
     $container.append($item)
         .isotope( 'appended', $item);
+}
+
+refreshMember = function(msg) {
+    // console.log($("face_"+msg.id+""));
+
+    $("#face_"+msg.id+" img").prop("src", msg.img)
+
+    // var $item = $("<div>")
+    //                 .prop("class", "element-item ")
+    //                 .prop("id", "face_"+msg.id)
+    //                 .append(
+    //                     $("<img>").prop("src", msg.img)
+    //                 )
+    // $container.append($item)
+    //     .isotope('appended', $item);
 }
 
 // websocket
@@ -174,11 +210,26 @@ addMember = function (event) {
 var host = location.origin.replace(/^http/, 'ws')
 var ws = new WebSocket(host);
 
-ws.onmessage = function (event) {
-	var li = document.createElement('li');
-	li.innerHTML = JSON.parse(event.data);
-	document.querySelector('#pings').appendChild(li);
+var i=0;
 
-    addMember();
+ws.onmessage = function (event) {
+	// var li = document.createElement('li');
+	// li.innerHTML = JSON.parse(event.data);
+	// document.querySelector('#pings').appendChild(li);
+
+    var msg = JSON.parse(event.data);
+    // addMember();
+
+    if(msg.action=="hello"){
+        if(msg.id!=peer.id && faceList.indexOf(msg.id)==-1) {
+            addMember(msg);
+            faceList.push(msg.id);
+            ws.send(JSON.stringify({action: 'hello', id: peer.id}));
+        }
+    }
+    if(msg.action=="capture"){
+        if(msg.id!=peer.id) refreshMember(msg);
+    }
+
 };
 
