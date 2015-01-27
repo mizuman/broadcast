@@ -4,11 +4,13 @@
 var APIKEY = 'fd91b82a-a13d-11e4-aa18-c1fd09219403';
 
 //ユーザーリスト
-var userList = [];
+// var userList = [];
 var faceList = [];
 
 //Callオブジェクト
-var existingCall;
+var existingCall; // receiveList
+// var existingCalls = {};
+var sendList = [];
 
 // Compatibility
 navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
@@ -30,27 +32,109 @@ peer.on('open', function(){
     $('#my-id').text(peer.id);
 });
 
-// // 相手からのコールを受信したら自身のメディアストリームをセットして返答
-// peer.on('call', function(call){
-//     call.answer(window.localStream);
-//     step3(call);
-// });
+var mediaConnections;
+// var hoge;
 
-// // エラーハンドラー
-// peer.on('error', function(err){
-//     alert(err.message);
-//     step2();
-// });
+// 相手からのコールを受信したら空のストリームを返答
+peer.on('call', function(call){
 
-// // イベントハンドラー
-// $(function(){
+    if(existingCall) { 
+        existingCall.close();
+    }
 
-//     // 相手に接続
-//     $('#make-call').click(function(){
-//         var call = peer.call($('#contactlist').val(), window.localStream);
-//         step3(call);
+    if(sendList[0]) {
+        for (var i = sendList.length - 1; i >= 0; i--) {
+            sendList[i].close();
+            sendList.splice(i,1);
+        };
+    }
 
-//     });
+    existingCall = call;
+
+    call.answer();
+    call.on('stream', function(stream){
+        $("#speaker-video")
+            .attr({
+                src: URL.createObjectURL(stream)
+            })
+            .show()
+        if(window.localStream) {
+            $("#get-cam").prop('disabled', false);
+            $("#off-cam").prop('disabled', true);
+        }
+    });
+        call.on('close', function() {
+        existingCall.close();
+        $("#speaker-video").prop("src", false);
+    });
+});
+
+// エラーハンドラー
+peer.on('error', function(err){
+    alert(err.message);
+    // step2();
+});
+
+var call = function(peers) {
+
+    if(existingCall) {
+        existingCall.close();
+    }
+
+    for (var i = peers.length - 1; i >= 0; i--) {
+        var id = peers[i];
+        if(id !== peer.id) {
+            call_(id);
+        }
+    };
+}
+var call_ = function(peerid) {
+    var call = peer.call(peerid, window.localStream);
+    sendList.push(call);
+}
+
+// イベントハンドラー
+$(function(){
+
+    // 全員に接続
+    $('#get-cam').click(function(){
+        call(faceList);
+        $("#speaker-video")
+            .attr({
+                src: URL.createObjectURL(window.localStream)
+            })
+            .show()
+        $(this).prop('disabled', true);
+        $("#off-cam").prop('disabled', false);
+        // var call = peer.call($('#contactlist').val(), window.localStream);
+        // step3(call);
+    });
+
+    $("#off-cam").click(function(){
+        $("#speaker-video")
+            .attr({
+                src: false
+            })
+        if(window.sendList[0]) {
+            for (var i = window.sendList.length - 1; i >= 0; i--) {
+                window.sendList[i].close();
+                window.sendList.splice(i,1);
+            };
+        }
+            $("#get-cam").prop('disabled', false);
+            $("#off-cam").prop('disabled', true);
+        })
+
+    document.querySelector("#textbox").addEventListener("keypress", function(e){
+        var key = e.which || e.keyCode;
+        if (key == 13) {
+            var text = $("#textbox").val();
+            ws.send(JSON.stringify({type: 'msg', id: peer.id, text: text}));
+            $("#textbox").val("");
+        }
+    })
+    // 個々に接続
+
 
 //     // 切断
 //     $('#end-call').click(function(){
@@ -67,34 +151,61 @@ peer.on('open', function(){
 //     // ステップ１実行
 //     step1();
 
-//     //ユーザリス取得開始
-//     setInterval(getUserList, 2000);
+    //ユーザリス取得開始
+    // setInterval(getUserList, 2000);
 
-// });
+});
 
 function step1 () {
+    // apply video format
+    if(location.hash==="#hd" || checkBrowser() != "chrome") {
+        console.log("高画質モード。chrome以外は自動的に高画質モードになります。負荷高め")
+        var videoOpt = {"optional":[{"maxWidth":"1280"},{"maxHeight":"720"}, {"maxFrameRate": "60"}],"mandatory":{}}
+    } else {
+        var videoOpt = {
+            mandatory: {
+                maxWidth: 320,
+                maxHeight: 240
+            },
+            optional: [{ maxFrameRate: 15}]
+        }
+    }
     // メディアストリームを取得する
     navigator.getUserMedia({audio: true, video: true}, function(stream){
         $('#my-video').prop('src', URL.createObjectURL(stream));
+        $('#get-cam').prop('disabled', false);
         window.localStream = stream;
-        setInterval(capture,2000);
-        // capture();
-        
 
-        // step2();
+        setInterval(capture,2000);        
+
     }, function(){ $('#step1-error').show(); });
 }
 
 function capture () {
     $video = $('#my-video')[0];
     ctx.drawImage($video, 0,0,160,120);
-
     var base64 = $("#capture-video")[0].toDataURL('image/webp');
-    // var $img = $("<img>").prop("src", base64);
-    // $("#isotope").append($img);
 
-    ws.send(JSON.stringify({action: 'capture', id: peer.id, img: base64}));
+    ws.send(JSON.stringify({type: 'capture', id: peer.id, img: base64}));
     
+}
+
+function checkBrowser() {
+    var userAgent = window.navigator.userAgent.toLowerCase();
+
+    if (userAgent.indexOf('opera') != -1) {
+      return 'opera';
+    } else if (userAgent.indexOf('msie') != -1) {
+      return 'ie';
+    } else if (userAgent.indexOf('chrome') != -1) {
+      return 'chrome';
+    } else if (userAgent.indexOf('safari') != -1) {
+      return 'safari';
+    } else if (userAgent.indexOf('gecko') != -1) {
+      return 'gecko';
+    } else {
+      return false;
+    }
 }
 
 // function step2 () {
@@ -134,18 +245,13 @@ function capture () {
 
 // }
 
-// function getUserList () {
-//     //ユーザリストを取得
-//     $.get('https://skyway.io/active/list/'+APIKEY,
-//         function(list){
-//             for(var cnt = 0;cnt < list.length;cnt++){
-//                 if($.inArray(list[cnt],userList)<0 && list[cnt] != peer.id){
-//                     userList.push(list[cnt]);
-//                     $('#contactlist').append($('<option>', {"value":list[cnt],"text":list[cnt]}));
-//                 }
-//             }
+
+// function getUserList() {
+//     peer.listAllPeers(function(list){
+//         for(var i=0; i<list.length; i++){
+//             userList.push(list[i]);
 //         }
-//     );
+//     })
 // }
 
 // function showValue () {
@@ -186,7 +292,8 @@ addMember = function (msg) {
                     //     $container.isotope('layout');
                     // })
     $container.append($item)
-        .isotope( 'appended', $item);
+        .isotope('appended', $item)
+        .isotope('layout');
 }
 
 refreshMember = function(msg) {
@@ -195,9 +302,14 @@ refreshMember = function(msg) {
     $("#face_"+msg.id+" img").prop("src", msg.img)
 }
 
+removeMember = function(msg) {
+    $container.isotope('remove', $("#face_"+msg.id+""))
+            .isotope('layout');
+}
+
 sendHello = function(msg) {
     if(peer.id) {
-        ws.send(JSON.stringify({action: 'hello', id: peer.id}));
+        ws.send(JSON.stringify({type: 'hello', id: peer.id}));
     }
     else {
         setTimeout(sendHello, 2000);
@@ -221,16 +333,48 @@ ws.onmessage = function (event) {
     var msg = JSON.parse(event.data);
     // addMember();
 
-    if(msg.action=="hello"){
+    if(msg.type=="msg"){
+
+        var item = $('<li/>').append(
+                $("<div>").append(msg.text)
+                        .append(
+                            $("<i/>").text("(" + msg.id + ")")
+                            )
+            )
+
+
+
+
+
+        $("#chat-history").prepend(item);
+    }
+    else if(msg.type=="bye") {
+        removeMember(msg);
+        faceList = faceList.filter(function(id){
+            return id !== msg.id;
+        })
+    }
+    else if(msg.type=="hello"){
         if(msg.id!=peer.id && faceList.indexOf(msg.id)==-1) {
             addMember(msg);
             faceList.push(msg.id);
-            ws.send(JSON.stringify({action: 'hello', id: peer.id}));
+            ws.send(JSON.stringify({type: 'hello', id: peer.id}));
+            if(window.sendList[0]) {
+                call_(msg.id);
+            }
         }
     }
-    if(msg.action=="capture"){
+    else if(msg.type=="capture"){
         if(msg.id!=peer.id) refreshMember(msg);
     }
 
 };
 
+
+// ブラウザ終了イベント
+window.onbeforeunload = function () {
+  ws.send(JSON.stringify({
+    type: 'bye',
+    id: peer.id
+  }));
+};

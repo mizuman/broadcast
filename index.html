@@ -9,48 +9,38 @@
 
   <p>Your Peerid: <span id="my-id">...</span></p>
 
-  <button class="btn btn-primary">get the mic</button>
-  <canvas id="capture-video" width="160" height="120"></canvas>
+  <div class="container">
+    <button id="get-cam" class="btn btn-primary" disabled="disabled">broadcast</button>
+    <button id="off-cam" class="btn btn-default" disabled="disabled">finish</button>
+    <canvas id="capture-video" width="160" height="120"></canvas>
 
-  <div>
-    
+    <h2>Speaker</h2>
+    <video id="speaker-video" autoplay poster="http://placehold.it/320x240&text=broadcaster"></video>
   </div>
 
-  <div id="isotope">
-    <video id="my-video" class="element-item" muted="true" autoplay></video>
-<!--   
-    <div class="element-item">
-      <img src="http://placehold.it/200x150&text=Speaker" alt="">
+  <div class="container">
+    <h2>Face</h2>
+    <div id="isotope">
+      <video id="my-video" class="element-item" muted="true" autoplay poster="http://placehold.it/320x240&text=waiting for your video"></video>
     </div>
-    <div class="element-item">
-      <img src="http://placehold.it/200x150&text=Speaker" alt="">
-    </div>
-    <div class="element-item">
-      <img src="http://placehold.it/200x150&text=Speaker" alt="">
-    </div>
-    <div class="element-item">
-      <img src="http://placehold.it/200x150&text=Speaker" alt="">
-    </div>
-    <div class="element-item">
-      <img src="http://placehold.it/200x150&text=Speaker" alt="">
-    </div>
-    <div class="element-item">
-      <img src="http://placehold.it/200x150&text=Speaker" alt="">
-    </div>
- -->
   </div>
-  <div class="pure-g">
 
-
-
-  <h1>Pings</h1>
-  <ul id='pings'></ul>
+  <div class="container">
+    <h2>Chat</h2>
+    <div id="chat-area">
+      <div class="input-prepend">
+        <span class="add-on" id="user-name"><i class="icon-user"></i></span>
+        <input type="text" id="textbox" placeholder="今なにしてる？">
+      </div>
+    </div>
+    <ul id="chat-history" class="unstyled row-fluid"></ul>
+  </div>
 
   <script src="https://skyway.io/dist/0.3/peer.js"></script>
   <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
-  <!-- <script type="text/javascript" src="/js/masonry.pkgd.min.js"></script> -->
   <script type="text/javascript" src="/js/isotope.pkgd.min.js"></script>
   <script type="text/javascript" src="/js/imagesloaded.pkgd.min.js"></script>
   <script src="/js/script.js" type="text/javascript" charset="utf-8" async defer></script>
+  <!-- <script src="/js/switcher.js" type="text/javascript" charset="utf-8" async defer></script> -->
 </body>
 </html>

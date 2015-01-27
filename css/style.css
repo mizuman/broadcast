@@ -9,3 +9,8 @@
 #capture-video {
 	display: none;
 }
+
+#chat-history i {
+	color: #888;
+	font-size: smaller;
+}
