@@ -57,6 +57,7 @@ peer.on('call', function(call){
             .attr({
                 src: URL.createObjectURL(stream)
             })
+            .prop('muted', false)
             .show()
         if(window.localStream) {
             $("#get-cam").prop('disabled', false);
@@ -65,7 +66,9 @@ peer.on('call', function(call){
     });
         call.on('close', function() {
         existingCall.close();
-        $("#speaker-video").prop("src", false);
+        $("#speaker-video")
+            .prop("src", false)
+            .prop('muted', true)
     });
 });
 
@@ -103,6 +106,7 @@ $(function(){
             .attr({
                 src: URL.createObjectURL(window.localStream)
             })
+            .prop('muted', true)
             .show()
         $(this).prop('disabled', true);
         $("#off-cam").prop('disabled', false);
